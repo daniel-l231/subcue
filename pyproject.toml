@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "subcue"
+version = "0.1.0"
+description = "Small library and CLI for working with subtitle files, streaming-first"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "daniel-l231" }]
+
+[project.scripts]
+subcue = "subcue.cli:main"
+
+[tool.setuptools]
+packages = ["subcue"]
