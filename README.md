@@ -9,7 +9,7 @@ a multi-hour stream or lecture recording, where the SRT file itself can run
 into the tens of megabytes. `subcue` parses and writes cues one at a time,
 so memory use stays flat regardless of file size.
 
-Right now it speaks SubRip (`.srt`) only.
+It speaks SubRip (`.srt`) and WebVTT (`.vtt`).
 
 ## Library usage
 
@@ -39,6 +39,24 @@ Because both ends are iterators, you can pipe a transform between a `parse`
 call and a `write` call - shifting timestamps, dropping empty cues, merging
 adjacent ones - without ever materializing the full cue list.
 
+The top-level `parse`/`write` are the SRT versions. WebVTT lives in its own
+submodule, since the two formats have different headers and timestamp
+syntax:
+
+```python
+from subcue import vtt
+
+with open("input.vtt", encoding="utf-8") as f:
+    for cue in vtt.parse(f):
+        print(cue.start_ms, cue.end_ms, cue.text)
+
+with open("output.vtt", "w", encoding="utf-8") as f:
+    vtt.write(cues, f)
+```
+
+Both modules produce and consume the same `Cue` type, so converting between
+formats is just parsing with one module and writing with the other.
+
 ## CLI usage
 
 ```
@@ -57,5 +75,6 @@ in a script.
 
 ## Status
 
-Early. SRT parsing and writing, timestamp shifting, and basic validation
-work. See the roadmap for what's missing.
+Early. SRT and WebVTT parsing and writing, timestamp shifting, and basic
+validation work. The CLI (`shift`, `validate`) is still SRT-only - WebVTT
+support so far is library-level. See the roadmap for what's missing.
