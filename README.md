@@ -68,13 +68,23 @@ subcue shift input.srt output.srt --seconds -0.75
 
 # check for overlapping or out-of-order cues
 subcue validate input.srt
+
+# combine two tracks into one file, ordered by start time
+subcue merge dialogue.srt sfx.srt combined.srt
 ```
 
 `validate` exits non-zero if it finds problems, so it's usable as a check
 in a script.
 
+`merge` assumes both inputs are already sorted by start time, which every
+valid SRT file is, and streams the result out the same way `shift` does -
+it never holds more than one cue from each input in memory. Cues are
+renumbered sequentially in the output, same as any other `srt.write` call.
+
 ## Status
 
-Early. SRT and WebVTT parsing and writing, timestamp shifting, and basic
-validation work. The CLI (`shift`, `validate`) is still SRT-only - WebVTT
-support so far is library-level. See the roadmap for what's missing.
+Early. SRT and WebVTT parsing and writing, timestamp shifting, basic
+validation, and merging two tracks all work. The CLI (`shift`, `validate`,
+`merge`) is still SRT-only - WebVTT support so far is library-level. Next
+up: encoding detection for non-UTF-8 files, and a `convert` command between
+SRT and VTT.

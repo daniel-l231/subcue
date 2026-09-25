@@ -2,7 +2,7 @@ import argparse
 import sys
 from typing import Iterator, List, Optional
 
-from . import srt
+from . import merge, srt
 from .model import Cue
 
 
@@ -46,6 +46,15 @@ def _cmd_validate(args: argparse.Namespace) -> int:
     return 1 if problems else 0
 
 
+def _cmd_merge(args: argparse.Namespace) -> int:
+    with open(args.first, "r", encoding="utf-8") as f1, \
+            open(args.second, "r", encoding="utf-8") as f2, \
+            open(args.output, "w", encoding="utf-8") as outfile:
+        merged = merge.merge_streams(srt.parse(f1), srt.parse(f2))
+        srt.write(merged, outfile)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="subcue", description="small tools for working with subtitle files"
@@ -61,6 +70,14 @@ def build_parser() -> argparse.ArgumentParser:
     validate = sub.add_parser("validate", help="check an SRT file for overlaps and ordering problems")
     validate.add_argument("input")
     validate.set_defaults(func=_cmd_validate)
+
+    merge_parser = sub.add_parser(
+        "merge", help="merge two SRT files into one, ordered by start time"
+    )
+    merge_parser.add_argument("first")
+    merge_parser.add_argument("second")
+    merge_parser.add_argument("output")
+    merge_parser.set_defaults(func=_cmd_merge)
 
     return parser
 
