@@ -3,6 +3,7 @@ import sys
 from typing import Iterator, List, Optional
 
 from . import merge, srt
+from .encoding import open_text
 from .model import Cue
 
 
@@ -18,7 +19,7 @@ def _shift_cues(cues: Iterator[Cue], offset_ms: int) -> Iterator[Cue]:
 
 def _cmd_shift(args: argparse.Namespace) -> int:
     offset_ms = round(args.seconds * 1000)
-    with open(args.input, "r", encoding="utf-8") as infile, \
+    with open_text(args.input, args.encoding) as infile, \
             open(args.output, "w", encoding="utf-8") as outfile:
         srt.write(_shift_cues(srt.parse(infile), offset_ms), outfile)
     return 0
@@ -27,7 +28,7 @@ def _cmd_shift(args: argparse.Namespace) -> int:
 def _cmd_validate(args: argparse.Namespace) -> int:
     count = 0
     problems = 0
-    with open(args.input, "r", encoding="utf-8") as infile:
+    with open_text(args.input, args.encoding) as infile:
         try:
             previous_end = None
             for cue in srt.parse(infile):
@@ -47,8 +48,8 @@ def _cmd_validate(args: argparse.Namespace) -> int:
 
 
 def _cmd_merge(args: argparse.Namespace) -> int:
-    with open(args.first, "r", encoding="utf-8") as f1, \
-            open(args.second, "r", encoding="utf-8") as f2, \
+    with open_text(args.first, args.encoding) as f1, \
+            open_text(args.second, args.encoding) as f2, \
             open(args.output, "w", encoding="utf-8") as outfile:
         merged = merge.merge_streams(srt.parse(f1), srt.parse(f2))
         srt.write(merged, outfile)
@@ -61,18 +62,26 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    shift = sub.add_parser("shift", help="shift every timestamp in an SRT file by a fixed offset")
+    # shared by every command that reads a file; output is always UTF-8
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument(
+        "--encoding",
+        default="auto",
+        help="input encoding (default: detect from BOM, then UTF-8, then cp1252)",
+    )
+
+    shift = sub.add_parser("shift", parents=[common], help="shift every timestamp in an SRT file by a fixed offset")
     shift.add_argument("input")
     shift.add_argument("output")
     shift.add_argument("--seconds", type=float, required=True, help="offset in seconds, may be negative")
     shift.set_defaults(func=_cmd_shift)
 
-    validate = sub.add_parser("validate", help="check an SRT file for overlaps and ordering problems")
+    validate = sub.add_parser("validate", parents=[common], help="check an SRT file for overlaps and ordering problems")
     validate.add_argument("input")
     validate.set_defaults(func=_cmd_validate)
 
     merge_parser = sub.add_parser(
-        "merge", help="merge two SRT files into one, ordered by start time"
+        "merge", parents=[common], help="merge two SRT files into one, ordered by start time"
     )
     merge_parser.add_argument("first")
     merge_parser.add_argument("second")

@@ -73,6 +73,11 @@ subcue validate input.srt
 subcue merge dialogue.srt sfx.srt combined.srt
 ```
 
+Every command that reads a file takes `--encoding`. The default is to look
+for a byte order mark, then try UTF-8, then fall back to cp1252 (and latin-1
+if even that fails). The check reads the file in chunks, so it doesn't load
+a large file either. Output is always written as UTF-8.
+
 `validate` exits non-zero if it finds problems, so it's usable as a check
 in a script.
 
@@ -85,6 +90,6 @@ renumbered sequentially in the output, same as any other `srt.write` call.
 
 Early. SRT and WebVTT parsing and writing, timestamp shifting, basic
 validation, and merging two tracks all work. The CLI (`shift`, `validate`,
-`merge`) is still SRT-only - WebVTT support so far is library-level. Next
-up: encoding detection for non-UTF-8 files, and a `convert` command between
+`merge`) is still SRT-only - WebVTT support so far is library-level. Input
+encoding is detected automatically. Next up: a `convert` command between
 SRT and VTT.
